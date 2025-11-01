@@ -25,7 +25,12 @@
     html,body{height:100%;margin:0;background:var(--bg);color:#eafcff;font-family:Inter,Segoe UI,Arial,sans-serif; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
     a{color:inherit}
 
-    .container{max-width:1180px;margin:28px auto;padding:18px;display:grid;grid-template-columns:1fr 340px;gap:var(--gap);align-items:start}
+    /* top header logo (added from teachable machines file) */
+    .top-header { position: fixed; top: 16px; left: 16px; z-index:100; display:flex; align-items:center; gap:10px; }
+    .logo { height:44px; width:auto; cursor:pointer; transition:transform .18s ease; }
+    .logo:hover{ transform:scale(1.04); }
+
+    .container{max-width:1180px;margin:80px auto;padding:18px;display:grid;grid-template-columns:1fr 340px;gap:var(--gap);align-items:start}
     header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px}
     .title{display:flex;flex-direction:column;gap:4px}
     h1{margin:0;font-size:20px;font-weight:var(--fw-bold)}
@@ -80,6 +85,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 </head>
 <body>
+  <!-- logo header added -->
+  <header class="top-header">
+    <img src="logo.png" alt="Robotic Schools Logo" class="logo">
+  </header>
+
   <div class="container">
     <header>
       <div class="title">
