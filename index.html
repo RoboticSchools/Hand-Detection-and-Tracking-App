@@ -25,7 +25,6 @@
     html,body{height:100%;margin:0;background:var(--bg);color:#eafcff;font-family:Inter,Segoe UI,Arial,sans-serif; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
     a{color:inherit}
 
-    /* top header logo (added from teachable machines file) */
     .top-header { position: fixed; top: 25px; left: 25px; z-index:100; display:flex; align-items:center; gap:10px; }
     .logo { height:55px ; width:auto; cursor:pointer; transition:transform .18s ease; }
     .logo:hover{ transform:scale(1.04); }
@@ -85,7 +84,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 </head>
 <body>
-  <!-- logo header added -->
   <header class="top-header">
     <img src="logo.png" alt="Robotic Schools Logo" class="logo">
   </header>
@@ -97,14 +95,8 @@
       </div>
 
       <div class="controls" aria-hidden="false">
-        <!-- Arduino connect button -->
         <button id="connectArduinoBtn" class="btn primary" title="Connect / Disconnect Arduino">Connect Arduino</button>
-
-        <!-- micro:bit connect button -->
-        <button id="connectMicrobitBtn" class="btn" title="Connect / Disconnect micro:bit">Connect micro:bit</button>
-
-        <!-- Status fields -->
-        <div id="connStatus" class="status" role="status" aria-live="polite">Not connected</div>
+        <button id="connectMicrobitBtn" class="btn primary" title="Connect / Disconnect micro:bit">Connect micro:bit</button>
         <div id="microbitStatus" class="status" role="status" aria-live="polite" style="display:none;margin-left:6px">micro:bit: Not connected</div>
       </div>
     </header>
@@ -152,24 +144,8 @@
   </div>
 
   <script>
-    /****************************************************************
-     * Combined script:
-     * - Original Arduino Hand Tracking (Web Serial)
-     * - micro:bit Bluetooth (Web Bluetooth - Nordic UART)
-     *
-     * Requirements implemented:
-     * - Both Connect Arduino and Connect micro:bit buttons
-     * - Toggle connect/disconnect on same button
-     * - If one device is connected, hide the other button
-     * - When disconnected both buttons reappear
-     * - Send payload to the connected device (serial or micro:bit)
-     * - Keep existing UI & features unchanged where possible
-     ****************************************************************/
-
-    // UI elements (hand-tracking for Arduino original)
     const connectArduinoBtn = document.getElementById('connectArduinoBtn');
     const connectMicrobitBtn = document.getElementById('connectMicrobitBtn');
-    const connStatus = document.getElementById('connStatus');
     const microbitStatus = document.getElementById('microbitStatus');
     const canvas = document.getElementById('output');
     const videoEl = document.getElementById('inputVideo');
@@ -178,34 +154,23 @@
     const fingersCountEl = document.getElementById('fingersCount');
     const lastPayloadEl = document.getElementById('lastPayload');
     const canvasCtx = canvas.getContext('2d', { alpha: false });
-
-    // Mirror preview for user (selfie). Set true to mirror — keeps visual UX familiar.
     const MIRROR_PREVIEW = true;
-
-    /*********************
-     * Shared utilities
-     *********************/
     const encoder = new TextEncoder();
 
-    // small helper to hide/show the other device button when one connects
     function updateButtonsVisibility() {
       if (serialConnected) {
         connectMicrobitBtn.style.display = 'none';
         microbitStatus.style.display = 'none';
       } else if (bleConnected) {
         connectArduinoBtn.style.display = 'none';
-        connStatus.style.display = 'none';
+        microbitStatus.style.display = '';
       } else {
         connectMicrobitBtn.style.display = '';
         connectArduinoBtn.style.display = '';
-        connStatus.style.display = '';
         microbitStatus.style.display = 'none';
       }
     }
 
-    /************************
-     * Web Serial (Arduino)
-     ************************/
     let port = null;
     let writer = null;
     let serialConnected = false;
@@ -224,15 +189,11 @@
         await port.open({ baudRate: 115200 });
         writer = port.writable.getWriter();
         serialConnected = true;
-        connStatus.textContent = 'Connected';
         connectArduinoBtn.textContent = 'Disconnect';
-        // hide micro:bit UI while serial connected
         updateButtonsVisibility();
-        // start a read loop to consume incoming data (non-blocking)
         readLoop().catch(()=>{});
       } catch (err) {
         serialConnected = false;
-        connStatus.textContent = 'Not connected';
         connectArduinoBtn.textContent = 'Connect Arduino';
         alert('Failed to open serial port.');
         console.error('Serial connect error', err);
@@ -245,7 +206,6 @@
       try { if (writer) { await writer.close(); writer.releaseLock(); writer = null; } } catch(e) {}
       try { if (port) await port.close(); } catch(e) {}
       port = null; serialConnected = false;
-      connStatus.textContent = 'Not connected';
       connectArduinoBtn.textContent = 'Connect Arduino';
       updateButtonsVisibility();
     }
@@ -257,7 +217,6 @@
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
-          // optionally process incoming serial data here
         }
       } catch (e) {} finally { try { reader.releaseLock(); } catch(e){} }
     }
@@ -271,10 +230,6 @@
 
     connectArduinoBtn.addEventListener('click', connectArduino);
 
-    /************************
-     * Web Bluetooth (micro:bit - Nordic UART)
-     * Adapted from the micro:bit code provided. Renamed some vars to avoid collisions.
-     ************************/
     const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
     const UART_NOTIFY_CHAR_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
     const UART_WRITE_CHAR_UUID  = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
@@ -446,9 +401,6 @@
 
     connectMicrobitBtn.addEventListener('click', connectMicrobit);
 
-    /************************
-     * MediaPipe Hands setup (original)
-     ************************/
     const hands = new Hands({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
     });
@@ -465,7 +417,6 @@
     let camera = null;
     async function startCamera(){
       try {
-        // Use MediaPipe Camera helper to manage permissions and frames
         camera = new Camera(videoEl, {
           onFrame: async () => { await hands.send({ image: videoEl }); },
           width: 1280,
@@ -473,21 +424,14 @@
           facingMode: 'user'
         });
         await camera.start();
-
-        // ensure canvas matches incoming video size
         canvas.width = videoEl.videoWidth || 1280;
         canvas.height = videoEl.videoHeight || 720;
-        connStatus.textContent = 'Camera ready';
       } catch (err) {
         console.error('Camera start failed:', err);
-        connStatus.textContent = 'Camera unavailable';
       }
     }
-    startCamera().catch((e)=>{ console.error('startCamera error', e); connStatus.textContent = 'Camera unavailable'; });
+    startCamera().catch((e)=>{ console.error('startCamera error', e); });
 
-    /***********************
-     * Finger counting + drawing (original)
-     ***********************/
     function countFingers(landmarks, handednessLabel){
       if (!landmarks || landmarks.length === 0) return 0;
       const tips = [4,8,12,16,20];
@@ -596,7 +540,6 @@
       return `${handCount},${typeChar},${fingerCount}`;
     }
 
-    // Main results handler: updates UI and sends payload to connected device (serial OR micro:bit)
     function onResults(results){
       drawResultsOnCanvas(results);
       const handsDetected = (results.multiHandLandmarks || []).length;
@@ -605,13 +548,10 @@
       let fingersTotal = 0;
 
       if (handsDetected === 1){
-        // rawLabel is what MediaPipe reports (based on camera image coords)
         const rawLabel = results.multiHandedness && results.multiHandedness[0] ? results.multiHandedness[0].label : null;
-        // For display (since preview is mirrored) flip the label so user sees correct Left/Right
         const displayLabel = MIRROR_PREVIEW ? flipLabel(rawLabel) : rawLabel;
         const labelChar = displayLabel ? displayLabel.charAt(0).toUpperCase() : 'U';
         typeChar = (labelChar === 'L' || labelChar === 'R') ? labelChar : 'U';
-        // For finger counting, pass the rawLabel (don't flip) because landmarks coordinates are non-mirrored
         fingersTotal = countFingers(results.multiHandLandmarks[0], rawLabel);
       } else if (handsDetected === 2){
         typeChar = 'B';
@@ -633,29 +573,21 @@
         lastSent = payload;
         lastPayloadEl.textContent = payload;
 
-        // Send to whichever device is connected. Priority: serial (Arduino) if serialConnected is true,
-        // otherwise micro:bit if bleConnected is true.
         if (serialConnected) {
           sendSerialLine(payload);
         } else if (bleConnected) {
-          // send to micro:bit (do not await)
           sendToMicrobit(payload).catch(e=>console.warn('BLE send failed', e));
         }
       }
     }
 
-    // ensure both devices are closed on page unload
     window.addEventListener('beforeunload', async () => {
       try { if (writer) { await writer.close(); writer = null; } if (port) { await port.close(); } } catch (e) {}
       try { if (notifyChar && notifyChar.stopNotifications) await notifyChar.stopNotifications(); } catch(e){}
       try { if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) bleDevice.gatt.disconnect(); } catch(e){}
     });
 
-    // When connection state changes from either side, update UI visibility
-    // (also helpful if user disconnects from device OS-side)
     const stateMonitorInterval = setInterval(() => {
-      // if serial port present and readable/writable - keep serialConnected flag in sync is hard; skip deep checks
-      // for BLE, attempt to check gatt.connected
       if (bleDevice && bleDevice.gatt) {
         const nowBle = !!bleDevice.gatt.connected;
         if (nowBle !== bleConnected) {
