@@ -1,4 +1,4 @@
-# 🖐️ Hand Detection and Tracking — Arduino + Micro:Bit App  
+# 🖐️ Hand Detection and Tracking - Arduino + Micro:Bit App  
 ### 🔗 Try the App  
 👉 [**Open Live App**](https://roboticschools.github.io/Hand-Detection-and-Tracking-Arduino-Microbit-App/)  
 
@@ -21,7 +21,7 @@ No external software or installations needed — just open the link, connect you
 ---
 
 ## 📡 Data Format  
-The app sends data in this format:  
+The app sends data in this format: 
 
 <handCount>,<handType>,<fingerCount>
 
