@@ -1,6 +1,6 @@
 ### Microbit Code to Receive the Data from Hand Detection and Tracking App
 
-[Open in MakeCode Editor](https://makecode.microbit.org/_EpK9fHgF2Wa1)
+[Open in MakeCode Editor](https://makecode.microbit.org/_9LzAYhfa4Hkm)
 
 <img width="800" height="600" alt="image" src="https://github.com/user-attachments/assets/872759e1-c76b-4887-a323-655ddf2b9159" />
 
